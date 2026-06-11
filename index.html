@@ -271,31 +271,49 @@ footer{padding:3rem 2rem 2rem;border-top:1px solid var(--bdr);max-width:1100px;m
 .fsoc{width:34px;height:34px;border-radius:8px;border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all .2s;color:var(--txt2)}
 .fsoc:hover{border-color:var(--g);color:var(--g)}
 
+/* ═══ Mobile layout fixes ═══ */
+html,body{overflow-x:clip}
+@media(max-width:600px){
+  nav{padding:0 1rem}
+  .logo-text{display:none}
+  .nav-r{gap:.9rem}
+  .nav-r a{font-size:12.5px}
+  .nav-r a:nth-child(1),.nav-r a:nth-child(5){display:none}
+  .nav-enroll{padding:8px 12px;font-size:12px!important;white-space:nowrap}
+  .hfloat{display:none!important}
+  #achievements-sec div[style*="240px"]{grid-template-columns:1fr!important;padding:1.5rem!important}
+  #achievements-sec{padding:3.5rem 1.25rem!important}
+}
 /* ═══ LFX Animations Pack ═══ */
+section [id], .faq-sec, #modules-sec, #achievements-sec, #enroll-sec{scroll-margin-top:84px}
 #lfx-intro{position:fixed;inset:0;z-index:99999;background:#06060A;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;opacity:1;transition:opacity .55s ease,transform .55s ease}
 #lfx-intro.lfx-out{opacity:0;transform:scale(1.05);pointer-events:none}
 html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
+.lfx-skip{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);background:none;border:1px solid rgba(212,175,55,.3);color:rgba(237,234,216,.7);font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;padding:8px 22px;border-radius:30px;cursor:pointer;opacity:0;transition:opacity .4s,border-color .2s,color .2s}
+.lfx-skip.show{opacity:1}
+.lfx-skip:hover{border-color:var(--g);color:var(--g)}
 .lfx-intro-svg{width:min(64vw,420px);height:auto;display:block}
-.lfx-intro-svg text{font-family:'Cairo','Tajawal',sans-serif;font-weight:900;font-size:150px;letter-spacing:6px;fill:transparent;stroke:#D4AF37;stroke-width:1.6;stroke-dasharray:1600;stroke-dashoffset:1600;animation:lfxDraw 1.7s cubic-bezier(.4,0,.2,1) forwards,lfxFill .9s ease 1.15s forwards}
+.lfx-intro-svg text{font-family:'Cairo','Tajawal',sans-serif;font-weight:900;font-size:150px;letter-spacing:6px;fill:transparent;stroke:#D4AF37;stroke-width:1.6;stroke-dasharray:1600;stroke-dashoffset:1600;animation:lfxDraw 2.8s cubic-bezier(.4,0,.2,1) forwards,lfxFill 1.1s ease 2.1s forwards}
 @keyframes lfxDraw{to{stroke-dashoffset:0}}
 @keyframes lfxFill{to{fill:url(#lfxGoldGrad);stroke:rgba(212,175,55,.25)}}
-.lfx-intro-sub{margin-top:18px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;color:#EDEAD8;letter-spacing:4px;opacity:0;animation:lfxSubIn .7s ease 1.7s forwards}
+.lfx-intro-sub{margin-top:18px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;color:#EDEAD8;letter-spacing:4px;opacity:0;animation:lfxSubIn .8s ease 3s forwards}
 .lfx-intro-sub span{color:#D4AF37}
 @keyframes lfxSubIn{from{opacity:0;transform:translateY(10px)}to{opacity:.9;transform:translateY(0)}}
-.lfx-intro-glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.16) 0%,transparent 65%);animation:lfxGlowIn 1.4s ease .8s both}
+.lfx-intro-glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.16) 0%,transparent 65%);animation:lfxGlowIn 2s ease 1s both}
 @keyframes lfxGlowIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 .lfx-p{position:absolute;width:5px;height:5px;border-radius:50%;background:#F0CC5A;box-shadow:0 0 8px 2px rgba(212,175,55,.55);opacity:0;animation:lfxFloat 2.6s ease-in-out infinite}
 @keyframes lfxFloat{0%{opacity:0;transform:translateY(22px) scale(.5)}30%{opacity:.85}100%{opacity:0;transform:translateY(-90px) scale(1.05)}}
-.lfx-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-family:'Cairo',sans-serif;font-weight:900;font-size:clamp(180px,30vw,460px);letter-spacing:10px;color:rgba(212,175,55,.035);user-select:none;animation:lfxBreathe 5.5s ease-in-out infinite}
-@keyframes lfxBreathe{0%,100%{color:rgba(212,175,55,.028);text-shadow:0 0 60px rgba(212,175,55,.04)}50%{color:rgba(212,175,55,.055);text-shadow:0 0 90px rgba(212,175,55,.10)}}
+.lfx-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-family:'Cairo',sans-serif;font-weight:900;font-size:clamp(180px,30vw,460px);letter-spacing:10px;color:rgba(212,175,55,.03);text-shadow:0 0 70px rgba(212,175,55,.04);user-select:none;transform:translateZ(0);animation:lfxBreathe 5.5s ease-in-out infinite}
+@keyframes lfxBreathe{0%,100%{opacity:.5}50%{opacity:1}}
 .rv{opacity:0;transform:translateY(28px);transition:opacity .75s cubic-bezier(.4,0,.2,1),transform .75s cubic-bezier(.4,0,.2,1)}
 .rv-in{opacity:1;transform:none}
-.btn-g{animation:lfxPulse 2.4s ease-out infinite}
-@keyframes lfxPulse{0%{box-shadow:0 0 0 0 rgba(212,175,55,.45)}70%{box-shadow:0 0 0 16px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
+.btn-g{position:relative}
+.btn-g::after{content:'';position:absolute;inset:-3px;border-radius:11px;border:2px solid rgba(212,175,55,.55);opacity:0;pointer-events:none;animation:lfxPulse 2.4s ease-out infinite}
+@keyframes lfxPulse{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(1.16);opacity:0}}
 @media (prefers-reduced-motion: reduce){
   #lfx-intro{display:none}
   .lfx-watermark{animation:none}
-  .btn-g{animation:none}
+  .btn-g::after{animation:none;opacity:0}
   .rv{opacity:1;transform:none;transition:none}
 }
 
@@ -335,22 +353,31 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
     <text x="50%" y="146" text-anchor="middle">LFX</text>
   </svg>
   <div class="lfx-intro-sub"><span>LFX ACADEMY</span> — أكاديمية التداول</div>
+  <button class="lfx-skip" id="lfx-skip">تخطي ←</button>
 </div>
 <script>
 (function(){
   var ov=document.getElementById('lfx-intro');if(!ov)return;
-  var seen=false;try{seen=localStorage.getItem('lfx_intro_seen')==='1'}catch(e){}
   var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(seen||rm){ov.parentNode.removeChild(ov);window.__lfxIntroDone=true;return;}
-  try{localStorage.setItem('lfx_intro_seen','1')}catch(e){}
+  if(rm){ov.parentNode.removeChild(ov);window.__lfxIntroDone=true;return;}
   document.documentElement.classList.add('lfx-lock');
-  setTimeout(function(){ov.classList.add('lfx-out')},2450);
-  setTimeout(function(){
-    if(ov.parentNode)ov.parentNode.removeChild(ov);
-    document.documentElement.classList.remove('lfx-lock');
-    window.__lfxIntroDone=true;
-    if(window.__lfxStartCounters)window.__lfxStartCounters();
-  },3050);
+  var done=false;
+  function finish(){
+    if(done)return;done=true;
+    ov.classList.add('lfx-out');
+    setTimeout(function(){
+      if(ov.parentNode)ov.parentNode.removeChild(ov);
+      document.documentElement.classList.remove('lfx-lock');
+      window.__lfxIntroDone=true;
+      if(window.__lfxStartCounters)window.__lfxStartCounters();
+    },600);
+  }
+  var sk=document.getElementById('lfx-skip');
+  if(sk){
+    setTimeout(function(){sk.classList.add('show')},1500);
+    sk.addEventListener('click',finish);
+  }
+  setTimeout(finish,4700);
 })();
 </script>
 
@@ -403,7 +430,7 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
     <div class="lfx-watermark" aria-hidden="true">LFX</div>
 
     <!-- ── Animated Trading Chart Background ── -->
-    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.18">
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.10">
       <svg width="100%" height="100%" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1">
@@ -437,9 +464,10 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
         <path d="M0,520 L60,500 L120,480 L180,460 L220,490 L260,470 L300,440 L340,420 L380,450 L420,430 L460,400 L500,370 L540,350 L580,320 L620,340 L660,300 L700,270 L740,250 L780,230 L820,260 L860,220 L900,190 L940,160 L980,140 L1020,120 L1060,100 L1100,80 L1140,60 L1200,40 L1200,700 L0,700 Z" fill="url(#cg1)"/>
 
         <!-- Main price line (gold - bullish trend) -->
+        <polyline points="0,520 60,500 120,480 180,460 220,490 260,470 300,440 340,420 380,450 420,430 460,400 500,370 540,350 580,320 620,340 660,300 700,270 740,250 780,230 820,260 860,220 900,190 940,160 980,140 1020,120 1060,100 1100,80 1140,60 1200,40" fill="none" stroke="#D4AF37" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
         <polyline
           points="0,520 60,500 120,480 180,460 220,490 260,470 300,440 340,420 380,450 420,430 460,400 500,370 540,350 580,320 620,340 660,300 700,270 740,250 780,230 820,260 860,220 900,190 940,160 980,140 1020,120 1060,100 1100,80 1140,60 1200,40"
-          fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+          fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <animate attributeName="stroke-dashoffset" from="3000" to="0" dur="4s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
           <animate attributeName="stroke-dasharray" from="3000 3000" to="3000 0" dur="4s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
         </polyline>
@@ -505,7 +533,7 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
 
         <!-- Price label -->
         <rect x="1110" y="26" width="68" height="20" rx="4" fill="#D4AF37" opacity="0.9"/>
-        <text x="1144" y="40" font-family="monospace" font-size="11" font-weight="700" fill="#06060A" text-anchor="middle">$2,341.50</text>
+        <text x="1144" y="40" font-family="monospace" font-size="11" font-weight="700" fill="#06060A" text-anchor="middle">XAU/USD</text>
 
         <!-- Volume bars at bottom -->
         <rect x="50" y="660" width="10" height="20" rx="1" fill="#22C97A" opacity="0.4"/>
@@ -531,7 +559,7 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
     </div>
 
     <!-- Side floating stats -->
-    <div style="position:absolute;top:18%;left:3%;pointer-events:none;display:flex;flex-direction:column;gap:10px;opacity:.55">
+    <div class="hfloat" style="position:absolute;top:18%;left:3%;pointer-events:none;display:flex;flex-direction:column;gap:10px;opacity:.55">
       <div style="background:rgba(34,201,122,.1);border:1px solid rgba(34,201,122,.2);border-radius:8px;padding:8px 14px;font-family:monospace;font-size:12px;color:#22C97A;white-space:nowrap">
         XAU/USD ▲ +1.42%
       </div>
@@ -539,7 +567,7 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
         BTC/USD ▲ +2.87%
       </div>
     </div>
-    <div style="position:absolute;top:18%;right:3%;pointer-events:none;display:flex;flex-direction:column;gap:10px;opacity:.55">
+    <div class="hfloat" style="position:absolute;top:18%;right:3%;pointer-events:none;display:flex;flex-direction:column;gap:10px;opacity:.55">
       <div style="background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.2);border-radius:8px;padding:8px 14px;font-family:monospace;font-size:12px;color:#E05555;white-space:nowrap">
         EUR/USD ▼ -0.31%
       </div>
@@ -2260,7 +2288,7 @@ function lfxFaq(btn){
   }
   window.__lfxStartCounters = startCounters;
   if(window.__lfxIntroDone) startCounters();
-  setTimeout(startCounters, 3600);
+  setTimeout(startCounters, 5600);
 
   if(!rm && 'IntersectionObserver' in window){
     var targets = document.querySelectorAll('#page-home .sec, #page-home .for-sec, #page-home .results-sec, #achievements-sec, #page-home .social-strip, #faq-sec .faq-item, #page-home .enroll-wrap, #page-home .mods > *');
