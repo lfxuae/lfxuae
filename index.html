@@ -1429,7 +1429,7 @@ const EMAILJS_SERVICE_ID  = 'service_13sk4w5';
 const EMAILJS_TEMPLATE_ID = 'template_lrvdslm';
 
 // تهيئة EmailJS
-emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+try{ if(window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); }catch(e){ console.warn('emailjs init failed', e); }
 
 // ── عداد المقاعد
 (function initSeats(){
@@ -1487,93 +1487,88 @@ setTimeout(()=>{
 }, 3000);
 // ════════════════════════════════════════════
 
-const ADMIN_PASS       = 'LFX2005';
 const ADMIN_SECRET_URL = 'admin2005';
 
-// ── Supabase Config
-const SB_URL     = 'https://japxzymnvdgopdynnhtr.supabase.co';
-const SB_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphcHh6eW1udmRnb3BkeW5uaHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzA4OTMsImV4cCI6MjA5MjgwNjg5M30.uOY9p6MkMFbV-oomh4Eh5hQodwbIjzWuBlLtQRaBzfc';
-const SB_SVC_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphcHh6eW1udmRnb3BkeW5uaHRyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzIzMDg5MywiZXhwIjoyMDkyODA2ODkzfQ.ddVIsWDm5jmnaZm9vvH9jqOGmZ0yS42Sjxw75e6VHb8';
+// ══ كل عمليات قاعدة البيانات تمر عبر Netlify Function آمنة — لا توجد مفاتيح في المتصفح ══
+const DB_FN = '/.netlify/functions/db';
 
-// anon headers — للعمليات العامة (تسجيل مشترك جديد، لوجين مسوق)
-const SB_HEADERS = () => ({
-  'apikey':        SB_KEY,
-  'Authorization': 'Bearer ' + SB_KEY,
-  'Content-Type':  'application/json'
-});
-
-// service_role headers — للأدمن فقط (يتجاوز RLS)
-const SB_ADMIN_HEADERS = () => ({
-  'apikey':        SB_SVC_KEY,
-  'Authorization': 'Bearer ' + SB_SVC_KEY,
-  'Content-Type':  'application/json'
-});
-
-// قراءة عامة — anon
-async function sbGet(table, params=''){
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, { headers: SB_HEADERS() });
-    if(!r.ok){ console.error('sbGet', r.status, await r.text()); return []; }
-    const d = await r.json();
-    return Array.isArray(d) ? d : [];
-  } catch(e){ console.error('sbGet error',e); return []; }
+async function dbCall(op, payload={}){
+  try{
+    const headers = { 'Content-Type':'application/json' };
+    const ak = sessionStorage.getItem('lfx_admin_key');
+    if(ak) headers['x-lfx-admin'] = ak;
+    const r = await fetch(DB_FN, { method:'POST', headers, body: JSON.stringify({ op, ...payload }) });
+    return await r.json().catch(()=>({}));
+  }catch(e){ console.error('dbCall', op, e); return {}; }
 }
 
-// قراءة بصلاحية أدمن — service_role (يتجاوز RLS)
+// قراءة (أدمن)
 async function sbAdminGet(table, params=''){
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, { headers: SB_ADMIN_HEADERS() });
-    if(!r.ok){ console.error('sbAdminGet', r.status, await r.text()); return []; }
-    const d = await r.json();
-    return Array.isArray(d) ? d : [];
-  } catch(e){ console.error('sbAdminGet error',e); return []; }
+  const res = await dbCall('admin_get', { table, params });
+  return res.rows || [];
 }
 
+// إضافة — تسجيل مشترك يمر من المسار العام، والباقي أدمن
 async function sbInsert(table, data){
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
-      method: 'POST',
-      headers: { ...SB_ADMIN_HEADERS(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify(data)
-    });
-    const txt = await r.text();
-    console.log('INSERT', table, r.status, txt);
-    return r.ok;
-  } catch(e){ console.error('sbInsert error',e); return false; }
+  if(table === 'subscribers'){
+    const res = await dbCall('insert_subscriber', { data });
+    return !!res.ok;
+  }
+  const res = await dbCall('admin_insert', { table, data });
+  return !!res.ok;
 }
 
 async function sbUpdate(table, id, data){
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
-      method: 'PATCH',
-      headers: { ...SB_ADMIN_HEADERS(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify(data)
-    });
-    return r.ok;
-  } catch(e){ console.error('sbUpdate error',e); return false; }
+  const res = await dbCall('admin_update', { table, id, data });
+  return !!res.ok;
 }
 
 async function sbDelete(table, id){
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: SB_ADMIN_HEADERS()
-    });
-    console.log('DELETE', table, id, r.status);
-    return r.ok;
-  } catch(e){ console.error('sbDelete error',e); return false; }
+  const res = await dbCall('admin_delete', { table, id });
+  return !!res.ok;
+}
+
+// تسجيل عمولة مبيعة للمندوب — تُحسب في السيرفر
+async function sbCreditSale(ref){
+  if(!ref || ref === 'مباشر') return true;
+  const res = await dbCall('credit_sale', { ref });
+  return !!res.ok;
+}
+
+// رفع إثبات الدفع — يُصغّر في المتصفح ثم يُرفع عبر الفانكشن
+function shrinkImage(file, maxSide=1280, quality=.82){
+  return new Promise((resolve)=>{
+    if(!file.type.startsWith('image/')) return resolve(null);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width  = Math.round(img.width  * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+    };
+    img.onerror = ()=>resolve(null);
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 async function sbUploadProof(file, fileName){
-  try {
-    const r = await fetch(`${SB_URL}/storage/v1/object/proofs/${fileName}`, {
-      method: 'POST',
-      headers: { 'apikey': SB_SVC_KEY, 'Authorization': 'Bearer ' + SB_SVC_KEY, 'Content-Type': file.type },
-      body: file
-    });
-    if(r.ok) return `${SB_URL}/storage/v1/object/public/proofs/${fileName}`;
-    return null;
-  } catch(e){ return null; }
+  try{
+    let b64 = await shrinkImage(file);
+    let type = 'image/jpeg';
+    let name = fileName.replace(/\.[^.]+$/, '') + '.jpg';
+    if(!b64){
+      // ملف غير صوري (PDF مثلاً) — ارفعه كما هو إن كان حجمه مناسبًا
+      if(file.size > 3.5e6){ alert('الملف كبير جدًا — الرجاء رفع صورة أو ملف أصغر من 3MB'); return null; }
+      b64 = await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result.split(',')[1]); fr.onerror=()=>res(null); fr.readAsDataURL(file); });
+      type = file.type || 'application/octet-stream';
+      name = fileName;
+    }
+    if(!b64) return null;
+    const res = await dbCall('upload_proof', { fileName: name, contentType: type, dataBase64: b64 });
+    return res.url || null;
+  }catch(e){ console.error('upload proof', e); return null; }
 }
 
 let refCode = new URLSearchParams(window.location.search).get('ref') || '';
@@ -1596,15 +1591,18 @@ function scrollSec(id){
   _showPage('home');
   setTimeout(()=>{ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); },60);
 }
-function checkAdminPass(){
+async function checkAdminPass(){
   const val = document.getElementById('admin-pass').value;
-  if(val === ADMIN_PASS){
+  sessionStorage.setItem('lfx_admin_key', val);
+  const res = await dbCall('admin_login');
+  if(res.ok){
     sessionStorage.setItem('lfx_admin_auth','yes');
     document.getElementById('login-err').style.display='none';
     document.getElementById('admin-pass').value='';
     _showPage('admin');
     loadAdminData();
   } else {
+    sessionStorage.removeItem('lfx_admin_key');
     document.getElementById('login-err').style.display='block';
     document.getElementById('admin-pass').value='';
     document.getElementById('admin-pass').focus();
@@ -1653,9 +1651,10 @@ function checkAdminPass(){
 
   // ── استعادة جلسة المسوق إذا كان مسجلاً
   const spCode = sessionStorage.getItem('sp_auth_code');
-  if(spCode){
-    sbAdminGet('salespeople',`ref_code=eq.${spCode}`).then(sps=>{
-      if(sps?.[0]){ currentSP=sps[0]; loadSPDashboard(sps[0]).then(()=>_showPage('sp-dashboard')); }
+  const spPass = sessionStorage.getItem('sp_auth_pass');
+  if(spCode && spPass){
+    dbCall('sp_login',{code:spCode, pass:spPass}).then(res=>{
+      if(res.sp){ currentSP=res.sp; loadSPDashboard(res.sp).then(()=>_showPage('sp-dashboard')); }
     });
   }
 })();
@@ -1842,11 +1841,10 @@ async function handleSuccessfulPayment(){
   try {
     await sbInsert('subscribers',{ first_name:fn, last_name:ln, email:em, phone:ph, ref_code:ref, pay_method:'Ziina', status:'مدفوع', amount:170, date_str:dateStr });
     if(ref && ref !== 'مباشر'){
-      const sps = await sbAdminGet('salespeople',`ref_code=eq.${ref}`);
-      if(sps?.[0]) await sbUpdate('salespeople', sps[0].id,{ customers:(sps[0].customers||0)+1, revenue:(sps[0].revenue||0)+170 });
+      await sbCreditSale(ref);
     }
   } catch(e){ console.warn('Supabase error:',e); }
-  if(em){ emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{ to_name:`${fn} ${ln}`.trim(), to_email:em, from_name:'LFX Academy', course:'دورة LFX الكاملة للتداول', amount:'$170', ref_code:ref, pay_method:'Ziina', date:dateStr }).catch(()=>{}); }
+  if(em && window.emailjs){ emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{ to_name:`${fn} ${ln}`.trim(), to_email:em, from_name:'LFX Academy', course:'دورة LFX الكاملة للتداول', amount:'$170', ref_code:ref, pay_method:'Ziina', date:dateStr }).catch(()=>{}); }
   _showPage('success');
 }
 
@@ -1884,11 +1882,10 @@ async function confirmPending(subId, name, em, ph, ref, payM, dateStr){
   try {
     await sbUpdate('subscribers', subId, { status:'مدفوع' });
     if(ref && ref !== 'مباشر'){
-      const sps = await sbAdminGet('salespeople',`ref_code=eq.${ref}`);
-      if(sps?.[0]) await sbUpdate('salespeople', sps[0].id,{ customers:(sps[0].customers||0)+1, revenue:(sps[0].revenue||0)+170 });
+      await sbCreditSale(ref);
     }
   } catch(e){ console.warn('Supabase error:',e); }
-  if(em){ emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{ to_name:name, to_email:em, from_name:'LFX Academy', course:'دورة LFX الكاملة للتداول', amount:'$170', ref_code:ref, pay_method:payM, date:dateStr }).then(()=>{ alert(`✅ تم تأكيد دفع ${name}\nتم إرسال إيميل الترحيب`); }).catch(()=>{ alert(`✅ تم تأكيد الدفع\n⚠️ تعذّر إرسال الإيميل`); }); }
+  if(em && window.emailjs){ emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{ to_name:name, to_email:em, from_name:'LFX Academy', course:'دورة LFX الكاملة للتداول', amount:'$170', ref_code:ref, pay_method:payM, date:dateStr }).then(()=>{ alert(`✅ تم تأكيد دفع ${name}\nتم إرسال إيميل الترحيب`); }).catch(()=>{ alert(`✅ تم تأكيد الدفع\n⚠️ تعذّر إرسال الإيميل`); }); }
   else { alert(`✅ تم تأكيد دفع ${name}`); }
   loadAdminData();
 }
@@ -2072,8 +2069,8 @@ async function addSP(){
 let currentSP = null;
 
 async function adminOpenSPDash(code, name){
-  const sps = await sbAdminGet('salespeople',`ref_code=eq.${code}`);
-  if(sps?.[0]){ currentSP=sps[0]; sessionStorage.setItem('sp_auth_code',code); await loadSPDashboard(sps[0]); _showPage('sp-dashboard'); }
+  const res = await dbCall('sp_dashboard', { code });
+  if(res.sp){ currentSP=res.sp; sessionStorage.setItem('sp_auth_code',code); await loadSPDashboard(res.sp); _showPage('sp-dashboard'); }
 }
 
 async function checkSPLogin(){
@@ -2082,9 +2079,9 @@ async function checkSPLogin(){
   const errEl = document.getElementById('sp-login-err');
   if(!code||!pass){errEl.style.display='block';return;}
   try{
-    const sps = await sbAdminGet('salespeople', `ref_code=eq.${code}`);
-    const sp = sps?.[0];
-    if(!sp || sp.password !== pass){
+    const res = await dbCall('sp_login', { code, pass });
+    const sp = res.sp;
+    if(!sp){
       errEl.style.display='block';
       document.getElementById('sp-login-pass').value='';
       return;
@@ -2093,6 +2090,7 @@ async function checkSPLogin(){
     errEl.style.display='none';
     document.getElementById('sp-login-pass').value='';
     sessionStorage.setItem('sp_auth_code', code);
+    sessionStorage.setItem('sp_auth_pass', pass);
     await loadSPDashboard(sp);
     _showPage('sp-dashboard');
   }catch(e){ console.error('SP login error:',e); errEl.style.display='block'; }
@@ -2132,14 +2130,12 @@ async function loadSPDashboard(sp){
   document.getElementById('sp-dash-link').textContent = window.location.origin+window.location.pathname+'?ref='+sp.ref_code;
 
   // جلب مشتركي المسوق + إجمالي مشتركي المنصة (للعمولة المتدرجة)
-  const [subs, allSubs] = await Promise.all([
-    sbAdminGet('subscribers',`ref_code=eq.${sp.ref_code}&order=created_at.desc`),
-    sbAdminGet('subscribers','select=id&status=eq.مدفوع')
-  ]);
+  const d = await dbCall('sp_dashboard', { code: sp.ref_code, pass: sessionStorage.getItem('sp_auth_pass') || '' });
+  const subs = d.subs || [];
 
-  const paid       = (subs||[]).filter(s=>s.status==='مدفوع');
+  const paid       = subs.filter(s=>s.status==='مدفوع');
   const salesCount = paid.length;
-  const totalSubs  = (allSubs||[]).length;
+  const totalSubs  = d.totalPaid || 0;
 
   // حساب العمولة المتدرجة
   const {rate, label, tierName} = getCommissionTier(totalSubs);
@@ -2183,15 +2179,16 @@ function copySPLink(){
 }
 
 function logoutSP(){
-  currentSP=null; sessionStorage.removeItem('sp_auth_code'); _showPage('home');
+  currentSP=null; sessionStorage.removeItem('sp_auth_code'); sessionStorage.removeItem('sp_auth_pass'); _showPage('home');
 }
 
 // استعادة جلسة المسوق
 (async function(){
   const code=sessionStorage.getItem('sp_auth_code');
-  if(code){
-    const sps=await sbAdminGet('salespeople',`ref_code=eq.${code}`);
-    if(sps?.[0]){currentSP=sps[0];await loadSPDashboard(sps[0]);_showPage('sp-dashboard');}
+  const pass=sessionStorage.getItem('sp_auth_pass');
+  if(code && pass){
+    const res=await dbCall('sp_login',{code, pass});
+    if(res.sp){currentSP=res.sp;await loadSPDashboard(res.sp);_showPage('sp-dashboard');}
   }
 })();
 
