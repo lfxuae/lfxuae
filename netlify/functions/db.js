@@ -56,7 +56,7 @@ exports.handler = async (event) => {
         const row = {};
         for (const f of SUB_FIELDS) if (d[f] !== undefined) row[f] = String(d[f]).slice(0, 300);
         if (!SUB_STATUS.includes(row.status)) row.status = 'قيد التحقق';
-        row.amount = 170; // never trust the client with the price
+        row.amount = 200; // never trust the client with the price
         const r = await rest('subscribers', { method: 'POST', body: JSON.stringify(row), headers: { 'Prefer': 'return=minimal' } });
         return json(r.ok ? 200 : 502, { ok: r.ok });
       }
@@ -68,7 +68,7 @@ exports.handler = async (event) => {
         if (!sps[0]) return json(200, { ok: true });
         const r = await rest(`salespeople?id=eq.${encodeURIComponent(sps[0].id)}`, {
           method: 'PATCH',
-          body: JSON.stringify({ customers: (sps[0].customers || 0) + 1, revenue: (sps[0].revenue || 0) + 170 })
+          body: JSON.stringify({ customers: (sps[0].customers || 0) + 1, revenue: (sps[0].revenue || 0) + 200 })
         });
         return json(r.ok ? 200 : 502, { ok: r.ok });
       }
