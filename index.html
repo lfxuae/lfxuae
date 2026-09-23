@@ -2739,7 +2739,7 @@ function openChat(){document.getElementById('chat-box').classList.add('open');do
 function closeChat(){document.getElementById('chat-box').classList.remove('open');}
 function qMsg(txt){addMsg(txt,'user');setTimeout(()=>addMsg(replies[txt]||defReply,'bot'),700);}
 function sendMsg(){const i=document.getElementById('chat-inp'),t=i.value.trim();if(!t)return;addMsg(t,'user');i.value='';const k=Object.keys(replies).find(k=>t.includes(k.slice(0,5)));setTimeout(()=>addMsg(replies[k]||defReply,'bot'),800);}
-function addMsg(txt,type){const m=document.getElementById('chat-msgs'),d=document.createElement('div');d.className='msg '+type;d.innerHTML=txt.replace(/\n/g,'<br>')+'<div class="msg-time">الآن</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function addMsg(txt,type){const m=document.getElementById('chat-msgs'),d=document.createElement('div');d.className='msg '+type;d.innerHTML=esc(txt).replace(/\n/g,'<br>')+'<div class="msg-time">الآن</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
 
 // ── سلايدر الشهادات وآراء المشتركين ──
 function crdInit(id){
