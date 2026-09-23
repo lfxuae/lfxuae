@@ -1840,9 +1840,9 @@ async function sbDelete(table, id){
 }
 
 // تسجيل عمولة مبيعة للمندوب — تُحسب في السيرفر
-async function sbCreditSale(ref){
+async function sbCreditSale(ref, pkg){
   if(!ref || ref === 'مباشر') return true;
-  const res = await dbCall('credit_sale', { ref });
+  const res = await dbCall('credit_sale', { ref, pkg });
   return !!res.ok;
 }
 
@@ -2212,15 +2212,15 @@ async function addPendingPayment(){
 // ── تأكيد الدفع اليدوي من الإدارة
 async function confirmPending(subId, name, em, ph, ref, payM, dateStr, amount){
   if(!confirm(`تأكيد دفع ${name}؟\nسيُرسل إيميل الترحيب ورابط التيليغرام فوراً.`)) return;
-  try {
-    await sbUpdate('subscribers', subId, { status:'مدفوع' });
-    if(ref && ref !== 'مباشر'){
-      await sbCreditSale(ref);
-    }
-  } catch(e){ console.warn('Supabase error:',e); }
   // نستخدم المبلغ الفعلي المخزّن للمشترك (لا نعيد تخمينه) — يبقى صحيحًا حتى لو تغيّرت الأسعار لاحقًا
   const pkgName    = (payM && payM.includes(' — ')) ? payM.split(' — ')[1] : 'LFX Elite';
   const isElitePkg = pkgName.includes('Elite');
+  try {
+    await sbUpdate('subscribers', subId, { status:'مدفوع' });
+    if(ref && ref !== 'مباشر'){
+      await sbCreditSale(ref, pkgName);
+    }
+  } catch(e){ console.warn('Supabase error:',e); }
   const realAmount = Number(amount) || (isElitePkg ? 499 : 299);
   const emailTemplate = isElitePkg ? EMAILJS_TEMPLATE_ELITE : EMAILJS_TEMPLATE_FOUNDATION;
   if(em && window.emailjs){ emailjs.send(EMAILJS_SERVICE_ID, emailTemplate,{ to_name:name, to_email:em, from_name:'LFX Academy', course:pkgName, amount:'$'+realAmount, ref_code:ref, pay_method:payM, date:dateStr }).then(()=>{ alert(`تم تأكيد دفع ${name}\nتم إرسال إيميل الترحيب`); }).catch(()=>{ alert(`تم تأكيد الدفع\nتعذّر إرسال الإيميل`); }); }
