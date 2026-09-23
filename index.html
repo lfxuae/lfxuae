@@ -2428,6 +2428,7 @@ function renderSubsTable(){
  <td><span class="bg ${isPaid?'bg-g':'bg-pend'}">${esc(s.status||'—')}</span></td>
  <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
         ${s.proof_url ? `<a href="${esc(s.proof_url)}" target="_blank" class="bs bs-o" style="padding:3px 8px;font-size:10px;text-decoration:none"> الدليل</a>` : ''}
+ <button class="bs bs-o" style="padding:3px 8px;font-size:10px;white-space:nowrap" onclick="editSubscriberAmount('${escJs(s.id)}',${numAmt(s)})">✎ تعديل المبلغ</button>
         ${!isPaid ? `<button class="bs bs-g" style="padding:3px 8px;font-size:10px;white-space:nowrap" onclick="confirmPending('${escJs(s.id)}','${escJs(((s.first_name||'')+' '+(s.last_name||'')).trim())}','${escJs(s.email||'')}','${escJs(s.phone||'')}','${escJs(s.ref_code||'مباشر')}','${escJs(s.pay_method||'')}','${escJs(s.date_str||'')}',${numAmt(s)})">✓ تأكيد</button>` : ''}
  <button class="bs bs-o" style="padding:3px 8px;font-size:10px" onclick="copySubscriber('${escJs(((s.first_name||'')+' '+(s.last_name||'')).trim())}','${escJs(s.email||'')}','${escJs(s.phone||'')}')">نسخ</button>
  <button class="bs" style="padding:3px 8px;font-size:10px;background:rgba(224,85,85,.12);color:var(--red);border:1px solid rgba(224,85,85,.2)" onclick="deleteSubscriber('${escJs(s.id)}')">حذف</button>
@@ -2482,6 +2483,16 @@ async function deleteSubscriber(id){
   if(!confirm('هل أنت متأكد من حذف هذا المشترك؟')) return;
   await sbDelete('subscribers', id);
   loadAdminData();
+}
+
+// ── تعديل مبلغ مشترك يدويًا (بعد مطابقته مع صورة التحويل "الدليل")
+async function editSubscriberAmount(id, currentAmount){
+  const val = prompt('المبلغ الصحيح بالدولار (بعد التأكد من صورة التحويل):', currentAmount || '');
+  if(val === null) return; // المستخدم ألغى
+  const num = Number(val);
+  if(!Number.isFinite(num) || num < 0){ alert('أدخل رقمًا صحيحًا للمبلغ'); return; }
+  const ok = await sbUpdate('subscribers', id, { amount: num });
+  if(ok){ loadAdminData(); } else { alert('تعذّر حفظ التعديل — حاول مرة أخرى'); }
 }
 
 // ── حذف مسوق
