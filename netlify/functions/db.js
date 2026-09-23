@@ -174,3 +174,5 @@ exports.handler = async (event) => {
   } catch (e) {
     console.error('db function error:', e);
     return json(500, { error: 'server error' });
+  }
+};
