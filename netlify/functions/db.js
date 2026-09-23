@@ -95,3 +95,82 @@ exports.handler = async (event) => {
         const pass = String(req.pass || '');
         if (!code || !pass) return json(401, { sp: null });
         const sps = await getRows('salespeople', `ref_code=eq.${encodeURIComponent(code)}`);
+        const sp = sps[0];
+        if (!sp || sp.password !== pass) return json(401, { sp: null });
+        return json(200, { sp: sanitizeSP(sp) });
+      }
+
+      case 'sp_dashboard': {
+        const code = String(req.code || '').trim().toLowerCase().slice(0, 60);
+        if (!code) return json(400, { error: 'no code' });
+        const sps = await getRows('salespeople', `ref_code=eq.${encodeURIComponent(code)}`);
+        const sp = sps[0];
+        if (!sp) return json(404, { error: 'not found' });
+        const authed = isAdmin || (req.pass && sp.password === req.pass);
+        if (!authed) return json(401, { error: 'unauthorized' });
+        const [subs, allPaid] = await Promise.all([
+          getRows('subscribers', `ref_code=eq.${encodeURIComponent(code)}&order=created_at.desc`),
+          getRows('subscribers', 'select=id&status=eq.' + encodeURIComponent('مدفوع'))
+        ]);
+        return json(200, { sp: sanitizeSP(sp), subs, totalPaid: allPaid.length });
+      }
+
+      case 'upload_proof': {
+        const name = String(req.fileName || '').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 120);
+        const type = String(req.contentType || 'image/jpeg');
+        const b64  = String(req.dataBase64 || '');
+        if (!name || !b64) return json(400, { error: 'missing file' });
+        if (b64.length > 4.8e6) return json(413, { error: 'file too large' });
+        const buf = Buffer.from(b64, 'base64');
+        const r = await fetch(`${SB_URL}/storage/v1/object/proofs/${name}`, {
+          method: 'POST',
+          headers: isNewKey ? { 'apikey': SB_KEY, 'Content-Type': type } : { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': type },
+          body: buf
+        });
+        if (!r.ok) return json(502, { error: 'upload failed' });
+        return json(200, { url: `${SB_URL}/storage/v1/object/public/proofs/${name}` });
+      }
+
+      /* ───────── ADMIN OPS (require x-lfx-admin header) ───────── */
+
+      case 'admin_login':
+        return isAdmin ? json(200, { ok: true }) : json(401, { ok: false });
+
+      case 'admin_get': {
+        if (!isAdmin) return json(401, { error: 'unauthorized' });
+        const table = String(req.table || '');
+        if (!TABLES.includes(table)) return json(400, { error: 'bad table' });
+        const rows = await getRows(table, String(req.params || ''));
+        return json(200, { rows });
+      }
+
+      case 'admin_insert': {
+        if (!isAdmin) return json(401, { error: 'unauthorized' });
+        const table = String(req.table || '');
+        if (!TABLES.includes(table)) return json(400, { error: 'bad table' });
+        const r = await rest(table, { method: 'POST', body: JSON.stringify(req.data || {}), headers: { 'Prefer': 'return=minimal' } });
+        return json(r.ok ? 200 : 502, { ok: r.ok });
+      }
+
+      case 'admin_update': {
+        if (!isAdmin) return json(401, { error: 'unauthorized' });
+        const table = String(req.table || '');
+        if (!TABLES.includes(table)) return json(400, { error: 'bad table' });
+        const r = await rest(`${table}?id=eq.${encodeURIComponent(req.id)}`, { method: 'PATCH', body: JSON.stringify(req.data || {}) });
+        return json(r.ok ? 200 : 502, { ok: r.ok });
+      }
+
+      case 'admin_delete': {
+        if (!isAdmin) return json(401, { error: 'unauthorized' });
+        const table = String(req.table || '');
+        if (!TABLES.includes(table)) return json(400, { error: 'bad table' });
+        const r = await rest(`${table}?id=eq.${encodeURIComponent(req.id)}`, { method: 'DELETE' });
+        return json(r.ok ? 200 : 502, { ok: r.ok });
+      }
+
+      default:
+        return json(400, { error: 'unknown op' });
+    }
+  } catch (e) {
+    console.error('db function error:', e);
+    return json(500, { error: 'server error' });
