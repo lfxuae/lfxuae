@@ -514,6 +514,39 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
 </style>
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1850051099360656');
+fbq('track', 'PageView');
+// مساعد آمن لإرسال أحداث البكسل
+function lfxTrack(ev, data){ try{ if(window.fbq) fbq('track', ev, data||{}); }catch(e){} }
+function lfxPkgData(){
+  try{ const p = PACKAGES[selectedPackage];
+    return { content_name: p.name, content_ids: [selectedPackage], content_type: 'product', value: p.price, currency: 'USD' };
+  }catch(e){ return {}; }
+}
+// Purchase مرة وحدة فقط خلال 30 دقيقة (منع التكرار)
+function lfxPurchase(){
+  try{
+    const k='lfx_px_purchase', last=+localStorage.getItem(k)||0;
+    if(Date.now()-last < 30*60*1000) return;
+    localStorage.setItem(k, Date.now());
+  }catch(e){}
+  lfxTrack('Purchase', lfxPkgData());
+}
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1850051099360656&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 </head>
 <body>
 <!-- ═══ LFX Intro ═══ -->
@@ -1317,7 +1350,7 @@ html.lfx-lock,html.lfx-lock body{overflow:hidden!important}
  </div>
  </div>
  <div style="margin-bottom:1rem">
- <a href="https://pay.ziina.com/lfx/WOzsnVYal?source=app" target="_blank" class="bs bs-o" style="display:inline-block;padding:8px 18px;font-size:13px;font-weight:800;text-decoration:none;border-radius:8px" id="ziina-pay-link"> افتح صفحة Ziina للدفع ←</a>
+ <a href="https://pay.ziina.com/lfx/WOzsnVYal?source=app" target="_blank" class="bs bs-o" style="display:inline-block;padding:8px 18px;font-size:13px;font-weight:800;text-decoration:none;border-radius:8px" id="ziina-pay-link" onclick="lfxTrack('AddPaymentInfo', lfxPkgData())"> افتح صفحة Ziina للدفع ←</a>
  </div>
  <p style="font-size:13px;color:var(--txt2);margin-bottom:10px">بعد الدفع ارفع لقطة الشاشة كدليل: <span style="color:var(--red)">*</span></p>
  <div style="border:2px dashed var(--bdr2);border-radius:10px;padding:1rem;text-align:center;cursor:pointer;transition:border-color .2s" id="ziina-drop" onclick="document.getElementById('ziina-file').click()">
@@ -1903,6 +1936,7 @@ let selectedPackage = 'elite';
 function selectPackage(pkg){
   if(!PACKAGES[pkg]) return;
   applyPackage(pkg);
+  lfxTrack('ViewContent', lfxPkgData());
   // إعادة تعيين الخطوات إلى البداية
   document.getElementById('step-offer').style.display = 'block';
   document.getElementById('step-info').style.display = 'none';
@@ -2036,6 +2070,7 @@ async function checkAdminPass(){
 
 // ── خطوات التسجيل
 function startEnroll(){
+  lfxTrack('InitiateCheckout', lfxPkgData());
   document.getElementById('step-offer').style.display='none';
   document.getElementById('step-info').style.display='block';
 }
@@ -2046,6 +2081,7 @@ function goStep2(){
   if(!em || !em.includes('@')){alert('الرجاء إدخال بريد إلكتروني صحيح.');return;}
   document.getElementById('step-info').style.display='none';
   document.getElementById('step-pay').style.display='block';
+  lfxTrack('Lead', lfxPkgData());
 }
 function goStep1(){
   document.getElementById('step-pay').style.display='none';
@@ -2157,6 +2193,7 @@ async function payWithZiina(){
   try {
     await sbInsert('subscribers',{ first_name:fn, last_name:ln, email:em, phone:ph, ref_code:ref, pay_method:'Ziina — '+PACKAGES[selectedPackage].name, status:'قيد التحقق', amount:PACKAGES[selectedPackage].price, date_str:dateStr, proof_url:proofUrl });
   } catch(e){ console.warn('Supabase error:',e); }
+  lfxPurchase();
 
   document.getElementById('pay-loading').style.display = 'none';
   document.getElementById('pay-btn').style.display     = 'block';
@@ -2176,6 +2213,7 @@ async function handleSuccessfulPayment(){
   try {
     await sbInsert('subscribers',{ first_name:fn, last_name:ln, email:em, phone:ph, ref_code:ref, pay_method:'Ziina — '+PACKAGES[selectedPackage].name, status:'قيد التحقق', amount:PACKAGES[selectedPackage].price, date_str:dateStr });
   } catch(e){ console.warn('Supabase error:',e); }
+  lfxPurchase();
   _showPage('success-pending');
 }
 
@@ -2203,6 +2241,7 @@ async function addPendingPayment(){
   try {
     await sbInsert('subscribers',{ first_name:fn, last_name:ln, email:em, phone:ph, ref_code:ref, pay_method:payM, status:'قيد التحقق', amount:PACKAGES[selectedPackage].price, date_str:dateStr, proof_url:proofUrl });
   } catch(e){ console.warn('Supabase error:',e); }
+  lfxPurchase();
 
   _showPage('success-pending');
 }
